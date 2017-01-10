@@ -1,0 +1,88 @@
+<html>
+	<head>
+		<title>Batchat : This is the new shit</title>
+		<style>
+		.chat-message {
+			line-height: 1.5em;
+			margin: 16px 16px 0px 16px;
+	    height: 400px;
+	    width: 60%;
+	    background: #343335;
+	    font-size: large;
+	    padding: 16px;
+	    color: aliceblue;
+	    border-bottom: 0px;
+		}
+		div#typingStatus {
+			text-align: left;
+	    line-height: 1.5em;
+	    /* margin: 0px 86px 0px 83px; */
+	    height: 9px;
+	    width: 58.2%;
+	    background: #343335;
+	    font-size: large;
+	    padding: 16px;
+	    color: aliceblue;
+	    border: 1px solid white;
+	    border-top: 0px;
+		}
+		input {
+		  border: 1px solid #cecece;
+		  color: #616161;
+		  margin: 0px 16px;
+    	padding: 0.5em;
+		  font-size: 1em;
+		  width: 60%;
+		}
+		input[type="text"]:focus{
+  		outline: none;
+		}
+		body {
+			background-color: steelblue;
+    	text-align: -webkit-center;
+		}
+		</style>
+	</head>
+	<body>
+		<div>
+			<textarea id="textarea" class="chat-message" height=800 readonly="true"></textarea>
+			<div id="typingStatus"></div>
+			<form id="chatform" class="input-box">
+				<input type="text" placeholder="Enter a message" id="messageinput" autofocus autocomplete="off"/>
+			</form>
+		</div>
+		<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
+		<script>
+			var socket = io(),username,timeout;
+			while(!username){
+				username = prompt('Please enter your goddamn name to continue!');
+			}
+			socket.emit('login',{usr:username});
+			socket.on('message',function(data){
+				if(data.type === 'msg'){
+					document.getElementById('textarea').value+=`\n${data.usr} : ${data.msg}`;
+				}else{
+					document.getElementById('textarea').value+=`\n${data.msg}`;
+				}
+			});
+			socket.on('friendTyping',function(data){
+				clearTimeout(timeout);
+				document.getElementById('typingStatus').innerHTML=`\n${data.usrList.toString()} are typing...`;
+				timeout = setTimeout(function(){
+					document.getElementById('typingStatus').innerHTML=``;
+				},1500);
+			});
+			document.addEventListener('keyup',function(){
+				socket.emit('isTyping',{usr:username});
+			});
+			document.getElementById('chatform').onsubmit = function(e){
+				e.preventDefault();
+				socket.emit('usermessage',{usr:username,msg:document.getElementById('messageinput').value});
+				document.getElementById('messageinput').value = '';
+			};
+			window.onbeforeunload = function(e) {
+    		socket.emit('logout',{usr:username});
+			};
+		</script>
+	</body>
+<html>
